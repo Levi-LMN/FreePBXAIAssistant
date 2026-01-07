@@ -1,0 +1,151 @@
+﻿<!-- Views/Calls/Details.cshtml -->
+@model CallRecord
+@{
+    ViewData["Title"] = "Call Details";
+}
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2><i class="fas fa-phone-alt"></i> Call Details</h2>
+        <p class="text-muted">Call ID: @Model.CallId</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-comments"></i> Conversation Transcript</h5>
+            </div>
+            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                @if (!string.IsNullOrWhiteSpace(Model.Transcription))
+                {
+                    var lines = Model.Transcription.Split('\n');
+                    foreach (var line in lines)
+                    {
+                        if (line.StartsWith("USER:"))
+                        {
+                            <div class="mb-3">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-primary text-white rounded-circle p-2" style="width: 40px; height: 40px; text-align: center;">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <div class="card">
+                                            <div class="card-body bg-light">
+                                                @line.Substring(5)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else if (line.StartsWith("ASSISTANT:"))
+                        {
+                            <div class="mb-3">
+                                <div class="d-flex flex-row-reverse">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-success text-white rounded-circle p-2" style="width: 40px; height: 40px; text-align: center;">
+                                            <i class="fas fa-robot"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 me-3">
+                                        <div class="card">
+                                            <div class="card-body" style="background-color: #e8f5e9;">
+                                                @line.Substring(10)
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">No transcription available</p>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Call Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-5">Caller:</dt>
+                    <dd class="col-sm-7">@Model.CallerNumber</dd>
+                    
+                    <dt class="col-sm-5">Start Time:</dt>
+                    <dd class="col-sm-7">@Model.StartTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</dd>
+                    
+                    <dt class="col-sm-5">End Time:</dt>
+                    <dd class="col-sm-7">@(Model.EndTime?.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss") ?? "N/A")</dd>
+                    
+                    <dt class="col-sm-5">Duration:</dt>
+                    <dd class="col-sm-7">@Model.DurationSeconds seconds</dd>
+                    
+                    <dt class="col-sm-5">Intent:</dt>
+                    <dd class="col-sm-7"><span class="badge bg-secondary">@Model.Intent</span></dd>
+                    
+                    <dt class="col-sm-5">Outcome:</dt>
+                    <dd class="col-sm-7">
+                        @if (Model.Outcome == "Completed")
+                        {
+                            <span class="badge bg-success">@Model.Outcome</span>
+                        }
+                        else if (Model.Outcome == "Transferred")
+                        {
+                            <span class="badge bg-warning">@Model.Outcome</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-info">@Model.Outcome</span>
+                        }
+                    </dd>
+                    
+                    <dt class="col-sm-5">Sentiment:</dt>
+                    <dd class="col-sm-7">
+                        @{
+                            var sentimentClass = Model.SentimentScore > 0.6 ? "success" : (Model.SentimentScore < 0.4 ? "danger" : "warning");
+                            var sentimentText = Model.SentimentScore > 0.6 ? "Positive" : (Model.SentimentScore < 0.4 ? "Negative" : "Neutral");
+                        }
+                        <span class="badge bg-@sentimentClass">@sentimentText (@Model.SentimentScore.ToString("F2"))</span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+        
+        @if (Model.TransferredToAgent)
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-exchange-alt"></i> Transfer Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Transferred:</dt>
+                        <dd class="col-sm-6"><i class="fas fa-check-circle text-success"></i> Yes</dd>
+                        
+                        <dt class="col-sm-6">Extension:</dt>
+                        <dd class="col-sm-6">@Model.AgentExtension</dd>
+                        
+                        <dt class="col-sm-12">Reason:</dt>
+                        <dd class="col-sm-12">@Model.TransferReason</dd>
+                    </dl>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+

@@ -1,0 +1,385 @@
+﻿@model FreePBXAIAssistant.Models.CallsViewModel
+@{
+    ViewData["Title"] = "Calls";
+}
+
+<style>
+    .filters-bar {
+        background: var(--surface);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .filter-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .filter-input {
+        width: 100%;
+        padding: 10px 16px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        font-size: 14px;
+        transition: all 0.2s;
+    }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+    .calls-table-container {
+        background: var(--surface);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .table thead {
+            background: var(--background);
+        }
+
+        .table th {
+            padding: 16px 24px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table td {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        .table tbody tr {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+            .table tbody tr:hover {
+                background: var(--primary-light);
+            }
+
+    .call-number {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .call-time {
+        color: var(--text-secondary);
+        font-size: 13px;
+    }
+
+    .intent-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        background: var(--primary-light);
+        color: var(--primary);
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .status-completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-transferred {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-in-progress {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .sentiment-indicator {
+        width: 80px;
+        height: 8px;
+        background: var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .sentiment-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s;
+    }
+
+    .sentiment-positive {
+        background: var(--success);
+    }
+
+    .sentiment-neutral {
+        background: var(--warning);
+    }
+
+    .sentiment-negative {
+        background: var(--danger);
+    }
+
+    .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        background: var(--surface);
+        border-radius: 0 0 16px 16px;
+    }
+
+    .pagination-info {
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .pagination-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .page-btn {
+        padding: 8px 16px;
+        border: 1px solid var(--border);
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .icon-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        background: var(--background);
+        color: var(--text-secondary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+        .icon-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-secondary);
+    }
+
+    .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+    }
+
+    .empty-state-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+</style>
+
+<div class="page-header">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 class="page-title">Calls</h1>
+            <p class="page-subtitle">View and manage all AI assistant calls</p>
+        </div>
+        <button class="btn btn-primary" onclick="window.location.href='@Url.Action("Export", "Calls")'">
+            <span>📥</span>
+            <span>Export CSV</span>
+        </button>
+    </div>
+</div>
+
+<form method="get" asp-action="Index">
+    <div class="filters-bar">
+        <div class="filter-group">
+            <label class="filter-label">Search</label>
+            <input type="text" name="search" class="filter-input" placeholder="Search by number or content..." value="@Model.SearchQuery" />
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Intent Filter</label>
+            <select name="intent" class="filter-input">
+                <option value="" selected="@(string.IsNullOrEmpty(Model.IntentFilter))">All Intents</option>
+                <option value="Policy Inquiry" selected="@(Model.IntentFilter == "Policy Inquiry")">Policy Inquiry</option>
+                <option value="Claims" selected="@(Model.IntentFilter == "Claims")">Claims</option>
+                <option value="Billing" selected="@(Model.IntentFilter == "Billing")">Billing</option>
+                <option value="Sales" selected="@(Model.IntentFilter == "Sales")">Sales</option>
+                <option value="Agent Request" selected="@(Model.IntentFilter == "Agent Request")">Agent Request</option>
+            </select>
+        </div>
+        <div style="align-self: flex-end;">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+        </div>
+    </div>
+</form>
+
+<div class="calls-table-container">
+    @if (Model.Calls.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Call ID</th>
+                    <th>Caller Number</th>
+                    <th>Start Time</th>
+                    <th>Duration</th>
+                    <th>Intent</th>
+                    <th>Status</th>
+                    <th>Sentiment</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var call in Model.Calls)
+                {
+                    <tr onclick="window.location.href='@Url.Action("Details", "Calls", new { id = call.Id })'">
+                        <td>
+                            <span style="font-family: monospace; font-size: 13px; color: var(--text-secondary);">
+                                @call.CallId.Substring(0, 8)...
+                            </span>
+                        </td>
+                        <td>
+                            <div class="call-number">@call.CallerNumber</div>
+                        </td>
+                        <td>
+                            <div class="call-time">@call.StartTime.ToString("MMM dd, yyyy")</div>
+                            <div class="call-time" style="font-size: 12px;">@call.StartTime.ToString("HH:mm:ss")</div>
+                        </td>
+                        <td>@call.DurationSeconds sec</td>
+                        <td>
+                            <span class="intent-badge">@call.Intent</span>
+                        </td>
+                        <td>
+                            <span class="status-badge status-@(call.Outcome.ToLower().Replace(" ", "-"))">
+                                @if (call.Outcome == "Completed")
+                                {
+                                    <span>✓</span>
+                                }
+                                else if (call.Outcome == "Transferred")
+                                {
+                                    <span>🔄</span>
+                                }
+                                else
+                                {
+                                    <span>⏳</span>
+                                }
+                                <span>@call.Outcome</span>
+                            </span>
+                        </td>
+                        <td>
+                            <div class="sentiment-indicator">
+                                <div class="sentiment-fill sentiment-@(call.SentimentScore >= 0.6 ? "positive" : call.SentimentScore >= 0.4 ? "neutral" : "negative")"
+                                     style="width: @((call.SentimentScore * 100))%"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-buttons" onclick="event.stopPropagation();">
+                                <button class="icon-btn" onclick="window.location.href='@Url.Action("Details", "Calls", new { id = call.Id })'" title="View Details">
+                                    👁️
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <div class="pagination-info">
+                Showing @((Model.CurrentPage - 1) * Model.PageSize + 1) to @Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCalls) of @Model.TotalCalls calls
+            </div>
+            <div class="pagination-buttons">
+                <button class="page-btn" @(Model.CurrentPage == 1 ? "disabled" : "")
+                        onclick="window.location.href='@Url.Action("Index", new { page = Model.CurrentPage - 1, search = Model.SearchQuery, intent = Model.IntentFilter })'">
+                    Previous
+                </button>
+                @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min((Model.TotalCalls + Model.PageSize - 1) / Model.PageSize, Model.CurrentPage + 2); i++)
+                {
+                    <button class="page-btn @(i == Model.CurrentPage ? "active" : "")"
+                            onclick="window.location.href='@Url.Action("Index", new { page = i, search = Model.SearchQuery, intent = Model.IntentFilter })'">
+                        @i
+                    </button>
+                }
+                <button class="page-btn" @(Model.CurrentPage * Model.PageSize >= Model.TotalCalls ? "disabled" : "")
+                        onclick="window.location.href='@Url.Action("Index", new { page = Model.CurrentPage + 1, search = Model.SearchQuery, intent = Model.IntentFilter })'">
+                    Next
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-state-icon">📞</div>
+            <div class="empty-state-title">No calls found</div>
+            <p>There are no calls matching your criteria</p>
+        </div>
+    }
+</div>
